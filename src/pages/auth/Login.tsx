@@ -1,6 +1,6 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Eye, EyeOff, Leaf, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,14 +10,32 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real application, you would validate and authenticate
-    navigate("/dashboard");
+    setErrorMsg("");
+
+    try {
+      const response = await axios.post("http://localhost:5000/api/auth/login", {
+        email,
+        password,
+      });
+
+      const { user } = response.data;
+
+      localStorage.setItem("user", JSON.stringify(user));
+
+      navigate("/dashboard");
+    } catch (error) {
+      setErrorMsg(error.response?.data?.message );
+    }
   };
   
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-violet-600/10 via-background to-violet-600/5 p-4">
       <div className="w-full max-w-md">
@@ -27,7 +45,7 @@ export default function Login() {
             <span className="font-bold text-3xl text-foreground">Weefarm</span>
           </div>
         </div>
-        
+
         <Card className="border-border/40 shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Login to your account</CardTitle>
@@ -37,6 +55,8 @@ export default function Login() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {errorMsg && <p className="text-red-500 text-sm text-center">{errorMsg}</p>}
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -45,11 +65,14 @@ export default function Login() {
                     id="email"
                     placeholder="name@company.com"
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
                     required
                   />
                 </div>
               </div>
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
@@ -63,6 +86,8 @@ export default function Login() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
                     required
                   />
@@ -75,19 +100,19 @@ export default function Login() {
                   </button>
                 </div>
               </div>
+
               <div className="flex items-center space-x-2">
                 <Checkbox id="remember" />
-                <label
-                  htmlFor="remember"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
+                <label htmlFor="remember" className="text-sm font-medium leading-none">
                   Remember me
                 </label>
               </div>
+
               <Button type="submit" className="w-full">
                 Sign in
               </Button>
             </form>
+
             <div className="mt-4 text-center text-sm">
               Don't have an account?{" "}
               <Link to="/register" className="font-medium text-primary hover:underline">
@@ -95,6 +120,7 @@ export default function Login() {
               </Link>
             </div>
           </CardContent>
+
           <CardFooter className="flex justify-center border-t pt-4">
             <p className="text-xs text-muted-foreground">
               By continuing, you agree to Weefarm's Terms of Service and Privacy Policy.

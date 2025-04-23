@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,31 +12,59 @@ import { Label } from "@/components/ui/label";
 import { FileText } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios"; 
 
 export function NewInvoiceDialog() {
   const [formData, setFormData] = useState({
     clientName: "",
     amount: "",
     dueDate: "",
-    description: "",
+    status: "",  // Changement de description à status
   });
   const { toast } = useToast();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically save the invoice data
-    console.log("New invoice data:", formData);
-    toast({
-      title: "Facture créée",
-      description: `Facture créée pour ${formData.clientName}`,
-    });
+  
+    // Génération du numéro de facture côté client
+    const invoiceNumber = `INV-${Math.floor(1000 + Math.random() * 9000)}`;
+  
+    // Ajout du numéro de facture dans les données
+    const formDataWithNumber = { ...formData, invoiceNumber };
+  
+    try {
+      // Envoi des données au backend via une requête POST
+      const response = await axios.post("http://localhost:5000/api/invoices", formDataWithNumber);
+      console.log("Réponse du serveur:", response.data);
+  
+      toast({
+        title: "Facture créée",
+        description: `Facture créée pour ${formData.clientName}`,
+      });
+  
+      // Réinitialiser les champs du formulaire après la soumission
+      setFormData({
+        clientName: "",
+        amount: "",
+        dueDate: "",
+        status: "",
+        description: "",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la création de la facture:", error.response || error);
+      toast({
+        title: "Erreur",
+        description: `Une erreur est survenue lors de la création de la facture. ${error.response ? error.response.data.message : ''}`,
+        variant: "destructive",
+      });
+    }
   };
-
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -58,6 +85,18 @@ export function NewInvoiceDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+  <Label htmlFor="invoiceNumber">Numéro de Facture</Label>
+  <Input
+    id="invoiceNumber"
+    name="invoiceNumber"
+    placeholder="Numéro de facture"
+    value={formData.invoiceNumber}
+    onChange={handleChange}
+    required
+  />
+</div>
+
             <div className="grid gap-2">
               <Label htmlFor="clientName">Nom du client</Label>
               <Input
@@ -93,15 +132,18 @@ export function NewInvoiceDialog() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                name="description"
-                placeholder="Description de la facture"
-                value={formData.description}
-                onChange={handleChange}
-                required
-              />
+              <Label htmlFor="status">Statut</Label>
+              <select
+    id="status"
+    name="status"
+    value={formData.status}
+    onChange={handleChange}
+    required
+  >
+    <option value="pending">En attente</option>
+    <option value="paid">Payée</option>
+    <option value="overdue">En retard</option>
+  </select>
             </div>
           </div>
           <div className="flex justify-end">

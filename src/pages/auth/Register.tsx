@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Leaf, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,28 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real application, you would validate and register
-    navigate("/dashboard");
+
+    try {
+      await axios.post("http://localhost:5000/api/auth/register", {
+        name,
+        email,
+        password,
+      });
+
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement :", error);
+      alert(error.response?.data?.message || "Erreur lors de l'inscription");
+    }
   };
-  
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-violet-600/10 via-background to-violet-600/5 p-4">
       <div className="w-full max-w-md">
@@ -27,7 +41,7 @@ export default function Register() {
             <span className="font-bold text-3xl text-foreground">Weefarm</span>
           </div>
         </div>
-        
+
         <Card className="border-border/40 shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
@@ -47,10 +61,12 @@ export default function Register() {
                     type="text"
                     className="pl-10"
                     required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -61,10 +77,12 @@ export default function Register() {
                     type="email"
                     className="pl-10"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -75,6 +93,8 @@ export default function Register() {
                     placeholder="••••••••"
                     className="pl-10 pr-10"
                     required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <button
                     type="button"
@@ -85,7 +105,7 @@ export default function Register() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Checkbox id="terms" required />
                 <label
@@ -102,7 +122,7 @@ export default function Register() {
                   </Link>
                 </label>
               </div>
-              
+
               <Button type="submit" className="w-full">
                 Create Account
               </Button>
